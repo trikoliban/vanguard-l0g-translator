@@ -365,7 +365,7 @@ def translate_vgc_line(code, args):
         if parts:
             return f"Heartbeat tick verified (value: {parts[0]})."
         return "Heartbeat tick verified."
-    elif code == "155":
+    elif code in ("153", "155"):
         if parts:
             return f"State change event processed (new state: {parts[0]})."
         return "State change event processed."
