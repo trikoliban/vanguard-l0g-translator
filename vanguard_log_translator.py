@@ -353,7 +353,7 @@ def translate_vgc_line(code, args):
         return "Data transmission: Benchmark latency verified."
     elif code == "83":
         return "Heartbeat check verified."
-    elif code in ("52", "54"):
+    elif code in ("51", "52", "54"):
         return "Client initialization step completed."
     elif code == "37":
         if parts:
