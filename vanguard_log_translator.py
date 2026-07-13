@@ -4,12 +4,12 @@ import sys
 import glob
 import struct
 
-# Day and Month mappings
-DAYS = {"Mon": "Wednesday", "Tue": "Tuesday", "Wed": "Wednesday", "Thu": "Thursday", "Fri": "Friday", "Sat": "Saturday", "Sun": "Sunday"}
+# Türkçe Gün ve Ay Eşleştirmeleri
+DAYS = {"Mon": "Pazartesi", "Tue": "Salı", "Wed": "Çarşamba", "Thu": "Perşembe", "Fri": "Cuma", "Sat": "Cumartesi", "Sun": "Pazar"}
 MONTHS = {
-    "Jan": "January", "Feb": "February", "Mar": "March", "Apr": "April", 
-    "May": "May", "Jun": "June", "Jul": "July", "Aug": "August", 
-    "Sep": "September", "Oct": "October", "Nov": "November", "Dec": "December"
+    "Jan": "Ocak", "Feb": "Şubat", "Mar": "Mart", "Apr": "Nisan", 
+    "May": "Mayıs", "Jun": "Haziran", "Jul": "Temmuz", "Aug": "Ağustos", 
+    "Sep": "Eylül", "Oct": "Ekim", "Nov": "Kasım", "Dec": "Aralık"
 }
 
 NTSTATUS_MAP = {
@@ -25,7 +25,7 @@ NTSTATUS_MAP = {
     "00000000": "STATUS_SUCCESS"
 }
 
-# Vanguard Decryption Constants (from decryptor (1).py)
+# Vanguard Şifre Çözme Sabitleri (decryptor (1).py dosyasından)
 CONST_A = bytes.fromhex('c379b147423ef709fdb94dce8fafb8f8')
 CONST_B = bytes.fromhex('84d314fc0adc36674a72e10ef02e5ccb')
 MASK = CONST_A + CONST_B
@@ -53,9 +53,9 @@ def decrypt_log_data(file_path):
         with open(file_path, 'rb') as f:
             magic = f.read(4)
             if magic != b'pvpv':
-                return None  # Plain text decrypted log or other format
+                return None  # Şifresiz düz metin veya farklı format
             
-            f.read(4) # version/padding
+            f.read(4) # versiyon/dolgu
             key_bytes = f.read(32)
             
             records = []
@@ -76,7 +76,7 @@ def decrypt_log_data(file_path):
                 decrypted_lines.append(text)
         return decrypted_lines
     except Exception as e:
-        print(f"[-] Error trying to decrypt {os.path.basename(file_path)}: {e}")
+        print(f"[-] Hata - Şifre çözülemedi {os.path.basename(file_path)}: {e}")
         return None
 
 def get_desktop_path():
@@ -131,188 +131,188 @@ def sanitize_arguments(parts):
             cleaned.append(p_strip)
     return cleaned
 
-# Core VGK Translator
+# Çekirdek (VGK) Olay Çevirici (Türkçe)
 def translate_vgk_line(code, args):
     args = args.split('<<<')[0].strip()
     parts = [p.strip() for p in args.split(';') if p.strip()]
     
     if code == "1000002A":
-        return "Driver communication channel successfully activated."
+        return "Sürücü iletişim kanalı başarıyla aktif edildi."
     elif code == "1000004A":
         if len(parts) >= 2:
             ver = parts[0]
             date_time = translate_date_time(parts[1])
-            return f"Vanguard driver build version {ver} compiled on {date_time}."
-        return "Vanguard driver version and build date verified."
+            return f"Vanguard sürücü derleme sürümü {ver}, {date_time} tarihinde derlendi."
+        return "Vanguard sürücü sürümü ve derleme tarihi doğrulandı."
     elif code == "1000004E":
         if len(parts) >= 3:
-            return f"Operating system details: Windows version {parts[0]}.{parts[1]} build {parts[2]}."
-        return "Operating system version information logged."
+            return f"İşletim sistemi detayları: Windows sürümü {parts[0]}.{parts[1]} derleme {parts[2]}."
+        return "İşletim sistemi sürüm bilgisi günlüğe kaydedildi."
     elif code == "10000051":
-        return "Driver status check: Internal driver routine completed."
+        return "Sürücü durum kontrolü: Dahili sürücü rutini tamamlandı."
     elif code == "1000006D":
-        return "Vanguard kernel module vgk.sys successfully loaded."
+        return "Vanguard çekirdek modülü vgk.sys başarıyla yüklendi."
     elif code == "100000FA":
-        return "Game client process tracking terminated."
+        return "Oyun istemcisi süreç takibi sonlandırıldı."
     elif code == "100000FB":
-        return "Game client process tracking initialized."
+        return "Oyun istemcisi süreç takibi başlatıldı."
     elif code in ("1000165", "10000165"):
-        return "Driver status: Core telemetry check 165 completed."
+        return "Sürücü durumu: Çekirdek telemetri kontrolü 165 tamamlandı."
     elif code in ("1000166", "10000166"):
-        return "Driver status: Core telemetry check 166 completed."
+        return "Sürücü durumu: Çekirdek telemetri kontrolü 166 tamamlandı."
     elif code == "B0000001":
-        return "Driver initialization phase one completed."
+        return "Sürücü başlatma aşama 1 tamamlandı."
     elif code == "B0000002":
-        return "Driver initialization phase two completed."
+        return "Sürücü başlatma aşama 2 tamamlandı."
     elif code == "B0000017":
-        return "Security alert: Blocked loading of an insecure or unsigned driver."
+        return "Güvenlik uyarısı: Güvensiz veya imzasız bir sürücünün yüklenmesi engellendi."
     elif code in ("B0000028", "B0000041", "B0000043"):
         proc_names = [p for p in parts if p.endswith('.exe') or p.endswith('.sys') or p == 'System']
         if len(proc_names) >= 2:
             src = clean_process_name(proc_names[0])
             dst = clean_process_name(proc_names[1])
-            return f"Access request: Process {src} requested access to process {dst}."
-        return "Access request between active processes was audited."
+            return f"Erişim isteği: {src} süreci, {dst} sürecine erişim talep etti."
+        return "Aktif süreçler arasındaki erişim isteği denetlendi."
     elif code in ("B0000029", "B0000042", "B0000044"):
         proc_names = [p for p in parts if p.endswith('.exe') or p.endswith('.sys') or p == 'System']
         if len(proc_names) >= 2:
             src = clean_process_name(proc_names[0])
             dst = clean_process_name(proc_names[1])
-            return f"Handle creation: Process {src} opened a handle to process {dst}."
-        return "Handle duplication or creation event was audited."
+            return f"Tutamaç oluşturma: {src} süreci, {dst} süreci için bir tutamaç (handle) açtı."
+        return "Tutamaç kopyalama veya oluşturma olayı denetlendi."
     elif code == "B000003B":
         proc_names = [p for p in parts if p.endswith('.exe') or p.endswith('.sys') or p == 'System']
-        name = clean_process_name(proc_names[0]) if proc_names else "monitored process"
+        name = clean_process_name(proc_names[0]) if proc_names else "izlenen süreç"
         status_part = parts[-1] if parts else "00000000"
         status_text = translate_ntstatus(status_part)
-        return f"Process terminated: Monitored process {name} has closed with status {status_text}."
+        return f"Süreç sonlandırıldı: İzlenen {name} süreci {status_text} durumuyla kapandı."
     elif code == "B000003C":
         proc_names = [p for p in parts if p.endswith('.exe') or p.endswith('.sys') or p == 'System']
-        name = clean_process_name(proc_names[0]) if proc_names else "target process"
-        return f"Process placed under surveillance: Process {name} is now closely monitored."
+        name = clean_process_name(proc_names[0]) if proc_names else "hedef süreç"
+        return f"Süreç takibe alındı: {name} süreci artık yakından izleniyor."
     elif code == "B00000B7":
-        return "Operation completed successfully."
+        return "İşlem başarıyla tamamlandı."
     elif code == "B00000D3":
-        return "Driver status check: Signature database check completed."
+        return "Sürücü durum kontrolü: İmza veri tabanı kontrolü tamamlandı."
     elif code == "B00000D8":
-        return "Hardware and driver signature verification initiated."
+        return "Donanım ve sürücü imza doğrulaması başlatıldı."
     elif code == "B00000DE":
         proc_names = [p for p in parts if p.endswith('.exe') or p.endswith('.sys') or p.isalpha()]
-        name = clean_process_name(proc_names[0]) if proc_names else "trusted service"
-        return f"Trusted service process registered: {name}."
+        name = clean_process_name(proc_names[0]) if proc_names else "güvenilir servis"
+        return f"Güvenilir servis süreci kaydedildi: {name}."
     elif code == "B00000DF":
         proc_names = [p for p in parts if p.endswith('.exe') or p.endswith('.sys') or p == 'System']
         if len(proc_names) >= 2:
             src = clean_process_name(proc_names[0])
             dst = clean_process_name(proc_names[1])
-            return f"Process interaction: Process {src} interacted with process {dst}."
-        return "Inter-process driver interaction event logged."
+            return f"Süreç etkileşimi: {src} süreci, {dst} süreciyle etkileşime girdi."
+        return "Süreçler arası çekirdek etkileşim olayı günlüğe kaydedildi."
     elif code == "B00000E7":
         if len(parts) >= 2:
-            return f"Driver parameter calibration: Operation status confirmed (states: {parts[0]}, {parts[1]})."
-        return "Driver parameter calibration: Operation status confirmed."
+            return f"Sürücü parametre kalibrasyonu: İşlem durumu doğrulandı (durumlar: {parts[0]}, {parts[1]})."
+        return "Sürücü parametre kalibrasyonu: İşlem durumu doğrulandı."
     elif code == "B00000F1":
         if parts:
-            return f"Driver metric check: Value {parts[0]} reported."
-        return "Driver metric check: Value reported."
+            return f"Sürücü metrik kontrolü: {parts[0]} değeri bildirildi."
+        return "Sürücü metrik kontrolü: Değer bildirildi."
     elif code == "B0000106":
-        return "Kernel security check: Active critical system processes verified."
+        return "Çekirdek güvenlik kontrolü: Aktif kritik sistem süreçleri doğrulandı."
     elif code == "B0000124":
         if parts:
-            return f"System build check: Value {parts[0]} verified."
-        return "System build check: Value verified."
+            return f"Sistem derleme kontrolü: {parts[0]} değeri doğrulandı."
+        return "Sistem derleme kontrolü: Değer doğrulandı."
     elif code == "B0000133":
-        return "Driver status query: Function returned status STATUS_NOT_SUPPORTED."
+        return "Sürücü durum sorgusu: Fonksiyon STATUS_NOT_SUPPORTED durumu döndürdü."
     elif code == "E0000045":
-        return "Kernel allocation: System memory block allocated."
+        return "Çekirdek tahsisi: Sistem bellek bloğu tahsis edildi."
     elif code == "E0000050":
         if parts:
             status = translate_ntstatus(parts[0])
-            return f"Error: Fail fast exception occurred with status {status}."
-        return "Error: Fail fast exception occurred."
+            return f"Hata: {status} durumu ile hızlı hata (fail fast) istisnası oluştu."
+        return "Hata: Hızlı hata (fail fast) istisnası oluştu."
     elif code == "E0000054":
-        return "Compatibility warning: Hardware virtualization or Trusted Platform Module status is incompatible."
+        return "Uyumluluk uyarısı: Donanım sanallaştırma veya Güvenilir Platform Modülü (TPM) durumu uyumsuz."
     elif code == "E0000055":
-        return "Security warning: Hypervisor-protected Code Integrity or Secure Boot is disabled."
+        return "Güvenlik uyarısı: Hipervizör korumalı Kod Bütünlüğü (HVCI) veya Güvenli Önyükleme (Secure Boot) kapalı."
     elif code == "E0000057":
-        return "System integrity warning: Windows kernel debugging mode or test signing is enabled."
+        return "Sistem bütünlüğü uyarısı: Windows çekirdek hata ayıklama modu veya test imzalama açık."
     elif code == "E000005A":
-        return "Hardware restriction or BIOS verification failed."
+        return "Donanım kısıtlaması veya BIOS doğrulaması başarısız oldu."
     elif code in ("E0000067", "E000006C"):
-        return "Driver status check: Internal code check completed."
+        return "Sürücü durum kontrolü: Dahili kod kontrolü tamamlandı."
     elif code == "E0000089":
         proc_names = [p for p in parts if p.endswith('.exe') or p.endswith('.sys')]
-        name = clean_process_name(proc_names[0]) if proc_names else "process"
-        return f"Process alert: Suspicious behavior or crash handler activity detected in {name}."
+        name = clean_process_name(proc_names[0]) if proc_names else "süreç"
+        return f"Süreç uyarısı: {name} sürecinde şüpheli davranış veya çökme yöneticisi aktivitesi tespit edildi."
     elif code == "E0000097":
         if parts:
-            return f"Security alert: Unsigned or suspicious code injection detected in process memory at offset {parts[0]}."
-        return "Security alert: Unsigned or suspicious code injection detected in process memory."
+            return f"Güvenlik uyarısı: Süreç belleğinde {parts[0]} adresinde imzasız veya şüpheli kod enjeksiyonu tespit edildi."
+        return "Güvenlik uyarısı: Süreç belleğinde imzasız veya şüpheli kod enjeksiyonu tespit edildi."
     elif code == "E00000AF":
         proc_names = [p for p in parts if p.endswith('.exe') or p.endswith('.sys')]
-        pname = clean_process_name(proc_names[0]) if proc_names else "host process"
-        dll_name = "module file"
+        pname = clean_process_name(proc_names[0]) if proc_names else "ana süreç"
+        dll_name = "modül dosyası"
         for p in parts:
             if p.endswith('.dll'):
                 dll_name = p.split('\\')[-1]
                 break
-        return f"Module load: Loaded file {dll_name} in process {pname}."
+        return f"Modül yükleme: {dll_name} dosyası {pname} sürecine yüklendi."
     elif code == "E00000C3":
-        return "Module memory scan: Scanned memory region of a loaded module."
+        return "Modül bellek taraması: Yüklü bir modülün bellek bölgesi tarandı."
     elif code == "E00000D9":
-        return "Error: Failed to verify secure memory region."
+        return "Hata: Güvenli bellek bölgesi doğrulanamadı."
     elif code == "E00000E1":
         if parts:
-            return f"Driver state change: State code updated to {parts[0]}."
-        return "Driver state change: State code updated."
+            return f"Sürücü durum değişikliği: Durum kodu {parts[0]} olarak güncellendi."
+        return "Sürücü durum değişikliği: Durum kodu güncellendi."
     elif code == "E00000EF":
-        driver_name = "driver file"
+        driver_name = "sürücü dosyası"
         for p in parts:
             if p.endswith('.sys'):
                 driver_name = p.split('\\')[-1]
                 break
-        return f"Loaded driver file {driver_name} scanned."
+        return f"Yüklenen {driver_name} sürücü dosyası tarandı."
     elif code == "E000012D":
         proc_names = [p for p in parts if p.endswith('.exe') or p.endswith('.sys')]
-        name = clean_process_name(proc_names[0]) if proc_names else "monitored process"
-        return f"Process memory scan: Scanned memory offset in process {name}."
+        name = clean_process_name(proc_names[0]) if proc_names else "izlenen süreç"
+        return f"Süreç bellek taraması: {name} sürecinde bellek adresi tarandı."
     elif code == "E000013B":
-        return "Signature verification: Driver code signature verified."
+        return "İmza doğrulaması: Sürücü kod imzası doğrulandı."
     elif code == "E0000143":
-        return "Operation completed successfully."
+        return "İşlem başarıyla tamamlandı."
     elif code == "E0000144":
-        return "Error: Operation or function is not implemented."
+        return "Hata: İşlem veya fonksiyon desteklenmiyor / uygulanmadı."
     elif code == "E0000145":
-        return "Timing check: Internal timing calibration completed."
+        return "Zamanlama kontrolü: Dahili zamanlama kalibrasyonu tamamlandı."
     elif code == "E0000148":
-        return "System check: Thread or process context verified."
+        return "Sistem kontrolü: İş parçacığı veya süreç bağlamı doğrulandı."
     elif code == "E000015E":
-        return "Connection error: Handshake between client and server timed out."
+        return "Bağlantı hatası: İstemci ve sunucu arasındaki el sıkışma zaman aşımına uğradı."
     elif code == "E0000161":
         if len(parts) >= 2:
-            return f"Timing verification: Time Stamp Counter cycle check completed (cycle count: {parts[0]}, frequency: {parts[1]})."
-        return "Timing verification: Time Stamp Counter cycle check completed."
+            return f"Zamanlama doğrulaması: Zaman Damgası Sayacı döngü kontrolü tamamlandı (döngü sayısı: {parts[0]}, frekans: {parts[1]})."
+        return "Zamanlama doğrulaması: Zaman Damgası Sayacı döngü kontrolü tamamlandı."
     elif code == "E000016A":
-        return "Driver status: Periodic health check completed."
+        return "Sürücü durumu: Periyodik sağlık kontrolü tamamlandı."
     elif code == "E000016E":
-        return "Driver status: Telemetry heartbeat tick sent."
+        return "Sürücü durumu: Telemetri kalp atışı sinyali gönderildi."
     elif code == "E0000171":
         if parts:
-            return f"Driver error code reported: {parts[0]}."
-        return "Driver error code reported."
+            return f"Sürücü hata kodu bildirildi: {parts[0]}."
+        return "Sürücü hata kodu bildirildi."
     elif code == "FFFFFFFF":
         if parts:
             status = translate_ntstatus(parts[0])
-            return f"Error details: Status returned {status}."
-        return "Error details: Object not found or operation failed."
+            return f"Hata detayları: {status} durumu döndü."
+        return "Hata detayları: Nesne bulunamadı veya işlem başarısız oldu."
         
-    # General Fallback
+    # Genel VGK Fallback
     cleaned_args = sanitize_arguments(parts)
     if cleaned_args:
-        return f"Driver event: Internal event code {code} processed successfully (details: {', '.join(cleaned_args)})."
-    return f"Driver event: Internal event code {code} processed successfully."
+        return f"Sürücü olayı: {code} kodlu dahili olay başarıyla işlendi (detaylar: {', '.join(cleaned_args)})."
+    return f"Sürücü olayı: {code} kodlu dahili olay başarıyla işlendi."
 
-# Core VGC Translator
+# İstemci (VGC) Olay Çevirici (Türkçe)
 def translate_vgc_line(code, args):
     args = args.split('<<<')[0].strip()
     parts = [p.strip() for p in args.split(';') if p.strip()]
@@ -321,103 +321,102 @@ def translate_vgc_line(code, args):
         if len(parts) >= 2:
             ver = parts[0]
             date_time = translate_date_time(parts[1])
-            return f"Vanguard client build version {ver} compiled on {date_time}."
-        return "Vanguard client version info logged."
+            return f"Vanguard istemci sürümü {ver}, {date_time} tarihinde derlendi."
+        return "Vanguard istemci sürüm bilgisi günlüğe kaydedildi."
     elif code == "-1":
         if parts:
             status = translate_ntstatus(parts[0])
-            return f"Error status: Process ID or code returned {status}."
-        return "Error status: Resource or path name was not found."
+            return f"Hata durumu: Süreç kimliği veya kod {status} döndürdü."
+        return "Hata durumu: Kaynak veya yol adı bulunamadı."
     elif code in ("141", "67"):
         if parts:
-            return f"Endpoint connection: Connecting to server at {parts[0]}."
-        return "Endpoint connection: Handshake sequence initiated."
+            return f"Bağlantı noktası bağlantısı: {parts[0]} adresindeki sunucuya bağlanılıyor."
+        return "Bağlantı noktası bağlantısı: El sıkışma dizisi başlatıldı."
     elif code == "71":
         if parts:
-            return f"Network response: Server returned HTTP status code {parts[0]}."
-        return "Network response: Status received successfully."
+            return f"Ağ yanıtı: Sunucu HTTP durum kodu {parts[0]} döndürdü."
+        return "Ağ yanıtı: Durum başarıyla alındı."
     elif code in ("187", "195"):
-        return "Data transfer status: Operation completed successfully."
+        return "Veri aktarım durumu: İşlem başarıyla tamamlandı."
     elif code == "181":
-        return "Session initialized: Monitoring session established for game process."
+        return "Oturum başlatıldı: Oyun süreci için izleme oturumu kuruldu."
     elif code == "48":
-        return "Session closed."
+        return "Oturum kapatıldı."
     elif code in ("191", "192", "194"):
-        return "Handshake phase updated."
+        return "El sıkışma aşaması güncellendi."
     elif code in ("81", "162"):
         cleaned_args = sanitize_arguments(parts)
         if cleaned_args:
-            # Join multiple spaces with commas for readability
             joined = ", ".join(cleaned_args[0].split()) if len(cleaned_args) == 1 else ", ".join(cleaned_args)
-            return f"Data transmission: Benchmark latency verified (details: {joined})."
-        return "Data transmission: Benchmark latency verified."
+            return f"Veri iletimi: Karşılaştırmalı gecikme doğrulandı (detaylar: {joined})."
+        return "Veri iletimi: Karşılaştırmalı gecikme doğrulandı."
     elif code == "83":
-        return "Heartbeat check verified."
+        return "Nabız kontrolü doğrulandı."
     elif code in ("51", "52", "54"):
-        return "Client initialization step completed."
+        return "İstemci başlatma adımı tamamlandı."
     elif code == "37":
         if parts:
-            return f"Memory region mapped at base {parts[0]}."
-        return "Memory region mapped."
+            return f"Bellek bölgesi {parts[0]} taban adresinde eşlendi."
+        return "Bellek bölgesi eşlendi."
     elif code == "39":
-        return "Memory region unmapped."
+        return "Bellek bölgesi eşlenmesi kaldırıldı."
     elif code == "90":
         if parts:
-            return f"Heartbeat tick verified (value: {parts[0]})."
-        return "Heartbeat tick verified."
+            return f"Kalp atışı sinyali doğrulandı (değer: {parts[0]})."
+        return "Kalp atışı sinyali doğrulandı."
     elif code in ("153", "155"):
         if parts:
-            return f"State change event processed (new state: {parts[0]})."
-        return "State change event processed."
+            return f"Durum değişikliği olayı işlendi (yeni durum: {parts[0]})."
+        return "Durum değişikliği olayı işlendi."
     
-    # Specific VGC event code mappings
+    # Özel VGC Olay Kod Eşleştirmeleri
     elif code == "139":
-        val = parts[0] if parts else "unknown"
-        return f"CPU core check: Security scan executed on logical processor Core {val}."
+        val = parts[0] if parts else "bilinmiyor"
+        return f"CPU çekirdek kontrolü: Mantıksal işlemci Core {val} üzerinde güvenlik taraması yapıldı."
     elif code == "163":
-        val = parts[0] if parts else "unknown"
-        return f"Latency check: Network round-trip latency of {val} milliseconds verified."
+        val = parts[0] if parts else "bilinmiyor"
+        return f"Gecikme kontrolü: Sunucu git-gel gecikme süresi {val} milisaniye olarak doğrulandı."
     elif code == "164":
-        val = parts[0] if parts else "unknown"
-        return f"Handshake state: Connection handshake package sequence {val} verified."
+        val = parts[0] if parts else "bilinmiyor"
+        return f"El sıkışma durumu: Bağlantı el sıkışma paket sırası {val} doğrulandı."
     elif code == "165":
-        return "Keepalive tick: Connection status check verified."
+        return "Bağlantı ayakta tutma sinyali: Bağlantı durum kontrolü doğrulandı."
     elif code == "199":
-        val = parts[0] if parts else "unknown"
-        return f"Heartbeat tick: Status report index {val} sent."
+        val = parts[0] if parts else "bilinmiyor"
+        return f"Nabız sinyali: Durum raporu dizini {val} gönderildi."
     elif code == "160":
         val = parts[0] if parts else "1"
-        return f"Cryptographic handshake: Client key exchange phase {val} verified."
+        return f"Kriptografik el sıkışma: İstemci anahtar değişim aşaması {val} doğrulandı."
     elif code == "91":
-        return "Session state check: Active session connection verified."
+        return "Oturum durum kontrolü: Aktif oturum bağlantısı doğrulandı."
     elif code == "69":
-        return "Connection state: Secure link established with server."
+        return "Bağlantı durumu: Sunucu ile güvenli bağlantı kuruldu."
     elif code == "70":
-        return "Connection state: Client connection state updated."
+        return "Bağlantı durumu: İstemci bağlantı durumu güncellendi."
     elif code == "200":
-        return "Connection verification: Status active."
+        return "Bağlantı doğrulaması: Durum aktif."
     elif code == "208":
-        return "Session parameters: State configuration verified."
+        return "Oturum parametreleri: Durum yapılandırması doğrulandı."
     elif code == "21":
-        return "Initialization check: Startup sequence confirmed."
+        return "Başlatma kontrolü: Başlangıç dizisi onaylandı."
     elif code == "214":
-        return "Session parameter update: Internal validation completed."
+        return "Oturum parametre güncellemesi: Dahili doğrulama tamamlandı."
     elif code == "6":
-        return "Startup validation: Security credentials confirmed."
+        return "Başlangıç doğrulaması: Güvenlik kimlik bilgileri onaylandı."
     elif code in ("72", "73"):
-        return "Connection status: Endpoint state verified."
+        return "Bağlantı durumu: Uç nokta durumu doğrulandı."
     elif code == "79":
-        return "Disconnect event: Session disconnected successfully."
+        return "Bağlantı kesme olayı: Oturum bağlantısı başarıyla kesildi."
     elif code in ("84", "85", "89"):
-        return "Handshake state: Verification sequence completed."
+        return "El sıkışma durumu: Doğrulama dizisi tamamlandı."
     elif code in ("93", "94"):
-        return "Handshake sequence: Verification status updated."
+        return "El sıkışma dizisi: Doğrulama durumu güncellendi."
     
-    # General VGC Fallback
+    # Genel VGC Fallback
     cleaned_args = sanitize_arguments(parts)
-    desc = f"Client log event number {code} occurred."
+    desc = f"İstemci log olay numarası {code} gerçekleşti."
     if cleaned_args:
-        desc += f" Context details: {' '.join(cleaned_args)}."
+        desc += f" Bağlam detayları: {' '.join(cleaned_args)}."
     return desc
 
 def process_log_line(line):
@@ -480,30 +479,29 @@ def translate_file(in_path, out_path):
         fallback_dir = os.path.join(get_desktop_path(), "Translated_Vanguard_Logs")
         os.makedirs(fallback_dir, exist_ok=True)
         fallback_out = os.path.join(fallback_dir, f"translated_{os.path.basename(in_path)}")
-        print(f"[-] Permission denied writing to: {out_path}")
-        print(f"[*] Redirecting output to: {fallback_out}")
+        print(f"[-] Hata - Yazma yetkisi yok: {out_path}")
+        print(f"[*] Çıktı buraya yönlendiriliyor: {fallback_out}")
         return translate_file(in_path, fallback_out)
 
 def main():
     if len(sys.argv) < 3:
-        # Default behavior if no arguments are provided (completely universal)
         input_path = r"C:\Program Files\Riot Vanguard\Logs"
         desktop = get_desktop_path()
         output_path = os.path.join(desktop, "Translated_Vanguard_Logs")
-        print(f"[*] No arguments provided. Using defaults:")
-        print(f"[*] Input: {input_path}")
-        print(f"[*] Output: {output_path}")
+        print(f"[*] Argüman girilmedi. Varsayılan yollar kullanılıyor:")
+        print(f"[*] Girdi: {input_path}")
+        print(f"[*] Çıktı: {output_path}")
         print("-" * 50)
     else:
         input_path = sys.argv[1]
         output_path = sys.argv[2]
     
     if not os.path.exists(input_path):
-        print(f"Error: Input path does not exist: {input_path}")
+        print(f"Hata: Girdi yolu mevcut değil: {input_path}")
         sys.exit(1)
         
     if os.path.isdir(input_path):
-        print(f"[*] Translating all log files in directory: {input_path}")
+        print(f"[*] Klasördeki tüm log dosyaları çevriliyor: {input_path}")
         
         out_dir = output_path
         try:
@@ -515,12 +513,12 @@ def main():
         except PermissionError:
             out_dir = os.path.join(get_desktop_path(), "Translated_Vanguard_Logs")
             os.makedirs(out_dir, exist_ok=True)
-            print(f"[-] Permission denied writing to directory: {output_path}")
-            print(f"[*] Redirecting output directory to: {out_dir}")
+            print(f"[-] Hata - Klasöre yazma yetkisi yok: {output_path}")
+            print(f"[*] Çıktı klasörü buraya yönlendirildi: {out_dir}")
             
         files = glob.glob(os.path.join(input_path, "*.txt")) + glob.glob(os.path.join(input_path, "*.log"))
         if not files:
-            print("[-] No log or text files found in the directory.")
+            print("[-] Klasörde log veya metin dosyası bulunamadı.")
             return
             
         translated_count = 0
@@ -532,19 +530,19 @@ def main():
             try:
                 success, line_cnt = translate_file(f, out_file)
                 if success:
-                    print(f"[+] Translated: {file_name} ({line_cnt} lines)")
+                    print(f"[+] Çevrildi: {file_name} ({line_cnt} satır)")
                     translated_count += 1
             except Exception as e:
-                print(f"[-] Failed to translate {file_name}: {e}")
-        print(f"[#] Done! Successfully translated {translated_count} files.")
+                print(f"[-] Çeviri başarısız oldu {file_name}: {e}")
+        print(f"[#] Tamamlandı! Başarıyla {translated_count} dosya çevrildi.")
         
     else:
         try:
             success, line_count = translate_file(input_path, output_path)
             if success:
-                print(f"[+] Success! Successfully translated {line_count} lines.")
+                print(f"[+] Başarılı! {line_count} satır başarıyla çevrildi.")
         except Exception as e:
-            print(f"[-] Error translating file: {e}")
+            print(f"[-] Çeviri hatası: {e}")
             sys.exit(1)
 
 if __name__ == "__main__":
